@@ -16,12 +16,8 @@ DEV_LOGGER = logging.getLogger(__name__)
 class GitEditRealm(object):
     implements(IRealm)
 
-    def __init__(self, repo, reference):
-        self._repo = repo
-        self._reference = reference
+    def __init__(self, default_resource):
+        self._resource = default_resource
 
     def requestAvatar(self, avatar_id, mind, *interfaces):
-        reference = self._repo.get_repo().lookup_reference(self._reference)
-        commit = reference.get_object()
-        resource = GitResource(avatar_id, self._repo, commit)
-        return (IResource, resource, lambda: None)
+        return (IResource, self._resource, lambda: None)

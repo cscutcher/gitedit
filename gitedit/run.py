@@ -12,7 +12,7 @@ from twisted.web.guard import HTTPAuthSessionWrapper, BasicCredentialFactory
 from twisted.cred.checkers import InMemoryUsernamePasswordDatabaseDontUse
 
 
-from gitedit.site import GitEditApp
+from gitedit.app import GitEditApp
 from gitedit.authentication import GitEditRealm
 
 DEV_LOGGER = logging.getLogger(__name__)
@@ -20,14 +20,15 @@ DEV_LOGGER = logging.getLogger(__name__)
 
 def run():
     domain = "domain.com"
+    master_reference = 'refs/remotes/origin/master'
     observer = log.PythonLoggingObserver()
     observer.start()
 
     logging.basicConfig(level=logging.DEBUG)
 
     import sys
-    edit_app = GitEditApp(sys.argv[1], domain)
-    realm = GitEditRealm(edit_app)
+    app = GitEditApp(sys.argv[1], master_reference, domain)
+    realm = GitEditRealm(app.app.resource())
 
     test_pw_db = InMemoryUsernamePasswordDatabaseDontUse(test="testpw")
     credential_factory = BasicCredentialFactory(domain)

@@ -5,6 +5,7 @@ GitEditor class
 import logging
 import tempfile
 import shutil
+import collections
 
 import pygit2
 
@@ -40,16 +41,19 @@ class TreeEditor(object):
         return commit_id
 
 
-class GitEditor(object):
+class RemoteRepo(object):
     def __init__(self, clone_url):
-        super(GitEditor, self).__init__()
+        super(RemoteRepo, self).__init__()
         self._clone_url = clone_url
-        self._reference = 'refs/remotes/origin/master'
 
         self._git_mirror_dir = None
         self._git_mirror = None
 
         self._init_git_mirror()
+
+    @property
+    def repo(self):
+        return self._git_mirror
 
     def _init_git_mirror(self):
         if self._git_mirror is None:
@@ -76,6 +80,17 @@ class GitEditor(object):
         reference = self._git_mirror.lookup_reference(reference_id)
         commit = reference.get_object()
         return TreeEditor(self._git_mirror, commit)
+
+    def write_file(self, reference_id, path, data, author, committer, commit_message):
+        self.fetch()
+        reference = self._git_mirror.lookup_reference(reference_id)
+        orig_commit = reference.get_object()
+        tree_editor = self.get_tree_editor(reference_id)
+        tree_editor.write_file(path, data)
+        return tree_editor.commit(orig_commit, author, committer, commit_message)
+
+    def read_file(self, reference_id, path):
+        return self.get_tree_editor(reference_id).read_file(path)
 
     def __del__(self):
         self._remove_git_mirror()
